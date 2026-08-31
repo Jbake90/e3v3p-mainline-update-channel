@@ -1,0 +1,53 @@
+name: Build current-upstream candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: Official Klipper ref or full commit
+        required: true
+        default: master
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch official Klipper
+        shell: bash
+        run: |
+          git clone --filter=blob:none https://github.com/Klipper3d/klipper.git "$RUNNER_TEMP/klipper-source"
+          git -C "$RUNNER_TEMP/klipper-source" fetch origin "${{ inputs.upstream_ref }}"
+          git -C "$RUNNER_TEMP/klipper-source" checkout --detach "${{ inputs.upstream_ref }}"
+          git -C "$RUNNER_TEMP/klipper-source" rev-parse HEAD > upstream-klipper.lock
+      - name: Reuse helper only when chelper is unchanged
+        shell: bash
+        run: |
+          expected=$(awk -F= '$1 == "chelper_tree" {print $2}' release/release.manifest)
+          actual=$(git -C "$RUNNER_TEMP/klipper-source" rev-parse HEAD:klippy/chelper)
+          test "$actual" = "$expected" || {
+            echo "Klipper chelper changed; run the exact X2000E/glibc-2.29 cross-build before promotion." >&2
+            exit 1
+          }
+          mkdir -p "$RUNNER_TEMP/host"
+          tar -xOf release/klipper-runtime.tar.gz klipper/klippy/chelper/c_helper.so \
+            > "$RUNNER_TEMP/host/c_helper.so"
+      - name: Assemble non-installable candidate
+        shell: bash
+        run: |
+          KLIPPER_REPO="$RUNNER_TEMP/klipper-source" \
+          C_HELPER="$RUNNER_TEMP/host/c_helper.so" \
+          OUT_DIR="$RUNNER_TEMP/candidate/release" \
+          RELEASE_CHANNEL=candidate \
+          bash build-release.sh
+          cp upstream-klipper.lock "$RUNNER_TEMP/candidate/"
+          cp -a compatibility printer build-release.sh README.md \
+            "$RUNNER_TEMP/candidate/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e3v3p-mainline-candidate
+          path: ${{ runner.temp }}/candidate
+          if-no-files-found: error
