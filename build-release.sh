@@ -7,7 +7,7 @@ KLIPPER_REPO="${KLIPPER_REPO:-${PROJECT_ROOT}/klipper-source}"
 C_HELPER="${C_HELPER:-${PROJECT_ROOT}/tools/host-build/out/c_helper.so}"
 OUT_DIR="${OUT_DIR:-${UPDATER_ROOT}/release}"
 RELEASE_CHANNEL="${RELEASE_CHANNEL:-candidate}"
-RELEASE_REVISION="${RELEASE_REVISION:-1}"
+RELEASE_REVISION="${RELEASE_REVISION:-2}"
 CONFIG_VALIDATION="${CONFIG_VALIDATION:-not-run}"
 VALIDATED_CONFIG_SHA256="${VALIDATED_CONFIG_SHA256:-unknown}"
 MAIN_MCU_DICT_SHA256="${MAIN_MCU_DICT_SHA256:-unknown}"
@@ -55,7 +55,8 @@ work="$(mktemp -d "${TMPDIR:-/tmp}/e3v3p-release.XXXXXX")"
 trap 'rm -rf "${work}"' EXIT
 tree="${work}/tree"
 runtime="${work}/runtime"
-mkdir -p "${tree}" "${runtime}/klipper" "${OUT_DIR}"
+mkdir -p "${tree}" "${runtime}/klipper/klippy" \
+  "${runtime}/klipper/config" "${runtime}/klipper/docs" "${OUT_DIR}"
 git -C "${KLIPPER_REPO}" archive "${LOCK}" | tar -xf - -C "${tree}"
 
 actual_hx="$(sha256sum "${tree}/klippy/extras/hx71x.py" | awk '{print $1}')"
@@ -78,6 +79,10 @@ cp -a "${tree}/klippy/." "${runtime}/klipper/klippy/"
 install -m 0644 "${tree}/COPYING" "${runtime}/klipper/COPYING"
 install -m 0644 "${tree}/scripts/klippy-requirements.txt" \
   "${runtime}/klipper/klippy-requirements.txt"
+printf '%s\n' 'Runtime-only host release; examples remain in the source repository.' \
+  > "${runtime}/klipper/config/README"
+printf '%s\n' 'Runtime-only host release; documentation remains in the source repository.' \
+  > "${runtime}/klipper/docs/README"
 
 release_id="e3v3p-klipper-${LOCK:0:12}-r${RELEASE_REVISION}"
 c_helper_sha="$(sha256sum "${C_HELPER}" | awk '{print $1}')"

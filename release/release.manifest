@@ -1,5 +1,5 @@
 schema=1
-release_id=e3v3p-klipper-f0892d82b0f1-r1
+release_id=e3v3p-klipper-f0892d82b0f1-r2
 release_channel=production
 klipper_commit=f0892d82b0f1c1228454f09eb508eddde2250f4b
 klipper_version=v0.13.0-745-gf0892d82b-e3v3p-f001
@@ -13,4 +13,4 @@ main_mcu_dict_sha256=b861637d7003377f581a425002114a65b0aef414bb32bbfd3781cdcb198
 nozzle_mcu_dict_sha256=c3f6486b95c3bfb97a3f1fcde06feceaaa13de00d613efa35589f0e74bb0a4a0
 leveling_mcu_dict_sha256=cdb1b3566b5d212bf3668d1ed189b617dbaca0b5112afe7f2e7ae0264154b5bd
 mcu_firmware_action=none
-created_utc=2026-08-31T05:51:03Z
+created_utc=2026-08-31T05:55:58Z
